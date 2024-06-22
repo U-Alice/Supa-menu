@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String  @id @default(uuid())
+  fullName String
+  phoneNumber String
+  password String
+  email    String  @unique
+  orders   Order[]
+}
+
+model Restaurant {
+  id       String  @id @default(uuid())
+  name     String
+  address  String
+  phone    String
+  menus    Menu[]
+}
+
+model Menu {
+  id             String      @id @default(uuid())
+  name           String
+  description    String
+  restaurantId   String
+  restaurant     Restaurant  @relation(fields: [restaurantId], references: [id])
+  menuItems      MenuItem[]
+}
+
+model MenuItem {
+  id          String  @id @default(uuid())
+  name        String
+  description String
+  price       Float
+  menuId      String
+  menu        Menu    @relation(fields: [menuId], references: [id])
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id        String     @id @default(uuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  createdAt DateTime   @default(now())
+  status    OrderStatus
+  total     Float
+  orderItems OrderItem[]
+  payment   Payment?
+}
+
+model OrderItem {
+  id         String   @id @default(uuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id])
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  quantity   Int
+}
+
+model Payment {
+  id        String   @id @default(uuid())
+  orderId   String   @unique
+  order     Order    @relation(fields: [orderId], references: [id])
+  amount    Float
+  method    PaymentMethod
+  status    PaymentStatus
+  paidAt    DateTime @default(now())
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  PAYPAL
+  CASH
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
